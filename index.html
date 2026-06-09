@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SolarQuote Pro – PWA</title>
+  <meta name="theme-color" content="#1b5e3f">
+  <meta name="description" content="Professional solar quote builder – install as app, work offline">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    /* ========== YOUR FULL CSS (unchanged) ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #ffffff;
+      --border: #ddd;
+      --gold: #f5a623;
+      --teal: #2e7d64;
+      --red: #c62828;
+      --text: #000;
+      --muted: #555;
+      --card: #fff;
+      --row-even: #fafafa;
+      --radius: 10px;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08);
+      --header-bg: #1b5e3f;
+      --form-bg: #f0faf5;
+      --menu-bg: #1b5e3f;
+      --menu-hover: #2c7a4d;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+    }
+    /* Top bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-bar .logo-area {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .top-bar .logo-area span { color: var(--teal); }
+    .top-bar .menu-btn {
+      background: none;
+      border: none;
+      font-size: 26px;
+      cursor: pointer;
+      color: var(--text);
+      padding: 4px 8px;
+      line-height: 1;
+    }
+    /* Side nav */
+    .side-nav {
+      position: fixed;
+      top: 0;
+      left: -300px;
+      width: 280px;
+      height: 100%;
+      background: var(--menu-bg);
+      z-index: 1004;
+      transition: left 0.3s ease;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 0;
+    }
+    .side-nav.open { left: 0; }
+    .side-nav .close-nav {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .side-nav a, .side-nav button {
+      color: white;
+      text-decoration: none;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .side-nav a:hover, .side-nav button:hover { background: var(--menu-hover); }
+    .side-nav hr { margin: 0.5rem 0; border-color: rgba(255,255,255,0.2); }
+    .nav-footer {
+      margin-top: auto;
+      font-size: 0.7rem;
+      padding: 1rem 1.5rem;
+      color: rgba(255,255,255,0.6);
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1002;
+      display: none;
+    }
+    .overlay.active { display: block; }
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: 0.18s;
+      white-space: nowrap;
+    }
+    .btn-ghost { background: transparent; color: #333; border: 1px solid #bbb; }
+    .btn-ghost:hover { background: #e0e0e0; color: #000; }
+    .btn-gold { background: linear-gradient(135deg, #d48c00, #b57c00); color: white; }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(212,140,0,0.3); }
+    .btn-teal { background: linear-gradient(135deg, #2e7d64, #1b5e3f); color: white; }
+    .btn-teal:hover { transform: translateY(-1px); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    /* Tabs */
+    .tab-bar {
+      background: #f8f8f8;
+      border-bottom: 1px solid #ddd;
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+    }
+    .tab {
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab:hover { color: #000; }
+    .tab.active { color: #1b5e3f; border-bottom-color: #1b5e3f; }
+    /* Views */
+    .view { display: none; padding: 24px; max-width: 1140px; margin: 0 auto; }
+    .view.active { display: block; }
+    /* Form panel */
+    .form-panel {
+      background: var(--form-bg);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 0;
+    }
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-group label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #2e5a44;
+    }
+    .field-group input, .field-group select {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      padding: 10px 13px;
+      color: #000;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+    }
+    .logo-control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+    }
+    .logo-control label {
+      font-size: 12px;
+      color: #2e5a44;
+      text-transform: none;
+    }
+    .logo-upload-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+    }
+    .logo-preview {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 8px;
+      display: none;
+      border: 1px solid #ccc;
+    }
+    .btn-small {
+      background: #fff;
+      border: 1px solid #ccc;
+      color: #2e5a44;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    /* Material selector */
+    .material-row {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+    }
+    .material-row .search-box {
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    .material-row .search-box input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      font-size: 13px;
+    }
+    .material-row select {
+      width: 100%;
+      height: auto;
+      min-height: 200px;
+      padding: 8px;
+      background: white;
+    }
+    .material-row .btn { margin-top: 10px; width: 100%; }
+    .material-note {
+      font-size: 11px;
+      color: #c62828;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+    /* Table with sections */
+    .table-wrap {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      overflow: auto;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    thead th {
+      padding: 12px 14px;
+      text-align: left;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #333;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+    thead th:last-child { text-align: right; }
+    .section-header {
+      background: #eef5ee;
+      font-weight: bold;
+    }
+    .section-header td {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-family: 'Syne', sans-serif;
+      color: #2e5a44;
+    }
+    .subtotal-row td {
+      background: #f0f7f0;
+      font-weight: bold;
+      text-align: right;
+      padding: 8px 14px;
+      border-top: 1px solid #b2d8b2;
+    }
+    tbody tr.item-row { border-bottom: 1px solid #eee; }
+    tbody tr.item-row:nth-child(even) { background: #fafafa; }
+    td { padding: 9px 14px; vertical-align: middle; }
+    .part-name input {
+      background: transparent;
+      border: 1px dashed #aaa;
+      border-radius: 5px;
+      padding: 5px 8px;
+      width: 100%;
+      color: #000;
+    }
+    .qty-input, .price-input {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 7px 10px;
+      font-family: monospace;
+      width: 90px;
+      text-align: right;
+    }
+    .price-input { width: 120px; }
+    .total-cell { text-align: right; font-family: monospace; color: #2e7d64; }
+    .del-btn { background: none; border: none; color: #999; cursor: pointer; padding: 4px 6px; }
+    .del-btn:hover { color: #c62828; }
+    /* Totals */
+    .grand-total {
+      background: #f0f7f0;
+      border: 1px solid #b2d8b2;
+      border-radius: 8px;
+      padding: 12px 20px;
+      text-align: right;
+      display: inline-block;
+      margin-left: auto;
+      margin-bottom: 20px;
+    }
+    .grand-total .chip-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    .grand-total .chip-val {
+      font-family: monospace;
+      font-size: 26px;
+      font-weight: 600;
+      color: #2e7d64;
+    }
+    .currency-badge { font-size: 13px; color: #777; margin-right: 3px; }
+    .totals-bar { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+    /* Action buttons */
+    .table-bottom-actions {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      margin-top: -8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .bottom-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 0;
+      margin-bottom: 30px;
+    }
+    /* Contact section */
+    .contact-section {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+    /* History */
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .quote-cards { display: flex; flex-direction: column; gap: 12px; }
+    .quote-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      cursor: pointer;
+    }
+    .qc-left { flex: 1; }
+    .qc-amount { font-family: monospace; font-size: 20px; color: #2e7d64; }
+    .qc-actions { display: flex; gap: 8px; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+    .badge-gold { background: #f2e0c0; color: #b57c00; border: 1px solid #e0c090; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1005;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .modal-overlay.active { visibility: visible; opacity: 1; }
+    .confirm-modal {
+      background: white;
+      border-radius: 16px;
+      max-width: 320px;
+      width: 90%;
+      padding: 24px;
+      text-align: center;
+      border-top: 5px solid #1b5e3f;
+    }
+    .modal-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+    .btn-yes { background: #c62828; color: white; padding: 8px 24px; border-radius: 40px; border: none; cursor: pointer; }
+    .btn-no { background: #f0f0f0; color: #333; border: 1px solid #ccc; padding: 8px 24px; border-radius: 40px; cursor: pointer; }
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px 18px;
+      z-index: 300;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: 0.3s;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: #2e7d64; color: #2e7d64; }
+    /* App footer */
+    .app-footer {
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      font-size: 11px;
+      color: #777;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 12px;
+    }
+    /* Help & Settings modals content */
+    .help-content, .settings-content { padding: 10px; }
+    .help-content h3, .settings-content h3 { font-family: 'Syne', sans-serif; margin-bottom: 12px; color: #b57c00; }
+    .help-content ul { margin-left: 20px; margin-bottom: 12px; text-align: left; }
+    .theme-toggle { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+    .theme-toggle button { padding: 8px 16px; border-radius: 40px; border: none; cursor: pointer; background: #f0f0f0; border: 1px solid #ccc; }
+    .theme-toggle button.active { background: #1b5e3f; color: white; border-color: #1b5e3f; }
+    /* Dark mode */
+    body.dark {
+      --bg: #1a1a2e;
+      --border: #2d2d44;
+      --text: #e0e0e0;
+      --muted: #aaa;
+      --card: #16213e;
+      --row-even: #0f0f1a;
+      --form-bg: #1a1a2e;
+    }
+    body.dark .btn-ghost { color: #ccc; border-color: #444; background: transparent; }
+    body.dark .field-group input, body.dark .field-group select,
+    body.dark .material-row select, body.dark .filter-bar input,
+    body.dark .material-row .search-box input { background: #16213e; color: #e0e0e0; border-color: #2d2d44; }
+    body.dark .grand-total, body.dark .contact-section, body.dark .quote-card, body.dark .table-wrap { background: #16213e; border-color: #2d2d44; }
+    body.dark .confirm-modal { background: #1a1a2e; color: #e0e0e0; }
+    @media print {
+      .top-bar, .tab-bar, .del-btn, .btn, .history-header, .filter-bar, .logo-upload-area, .logo-control, #toast, .badge-gold, .form-panel, .table-bottom-actions, .bottom-actions, .modal-overlay, .contact-section, .material-row, .material-note, .side-nav, .overlay, .menu-btn, .app-footer {
+        display: none !important;
+      }
+      body, .view, .table-wrap, .quote-card { background: white; color: black; }
+      .print-header { display: flex !important; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #333; }
+      .print-header h1 { font-size: 24px; margin: 0; }
+      .client-print { margin-bottom: 20px; font-size: 14px; border-left: 3px solid #333; padding-left: 10px; }
+      .print-contact-bottom { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc; text-align: center; }
+      .table-wrap { border: 1px solid #ccc; }
+      .part-name input, .qty-input, .price-input { background: transparent; border: none; color: black; }
+      .total-cell { color: #116644; }
+      .grand-total { background: #f9f9f9; border: 1px solid #aaa; }
+    }
+    .print-header { display: none; }
+    .print-contact-bottom { display: none; }
+    /* Install button style */
+    .install-btn {
+      background: #1b5e3f;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-weight: bold;
+      margin-top: 8px;
+      cursor: pointer;
+      display: inline-block;
+    }
+    .install-btn:hover {
+      background: #2c7a4d;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-area">Solar<span>Quote</span></div>
+  <button class="menu-btn" id="menuToggleBtn">☰</button>
+</div>
+
+<div class="overlay" id="menuOverlay"></div>
+<div class="side-nav" id="sideNav">
+  <button class="close-nav" id="closeNavBtn">✖</button>
+  <button id="navHome">🏠 Home</button>
+  <button id="navExport">📥 Export Data (JSON)</button>
+  <button id="navImport">📤 Import Data (JSON)</button>
+  <button id="navHelp">❓ Help</button>
+  <button id="navSettings">⚙️ Settings</button>
+  <hr>
+  <div style="padding: 0 1.5rem; color: rgba(255,255,255,0.8); font-size: 0.8rem;">Contact us:</div>
+  <a href="mailto:lamisaid97@gmail.com" id="navEmail">✉️ Email: lamisaid97@gmail.com</a>
+  <a href="https://wa.me/2347067820673" target="_blank" id="navWhatsapp">💬 WhatsApp: 0706 782 0673</a>
+  <hr>
+  <button id="navExit">🚪 Exit</button>
+  <div class="nav-footer">SolarQuote Pro v2.1</div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('builder')">📋 Quote Builder</div>
+  <div class="tab" onclick="switchTab('history')">📁 History <span id="histBadge" style="background:#f2e0c0;color:#b57c00;border-radius:20px;padding:1px 7px;font-size:10px;margin-left:6px;">0</span></div>
+</div>
+
+<div id="builderView" class="view active">
+  <div class="print-header">
+    <div class="title-area"><h1 id="printCompanyName">SOLAR INSTALLATION QUOTATION</h1></div>
+    <div class="logo-area-print" id="printLogoWrapper"></div>
+  </div>
+  <div id="printClientLine" class="client-print" style="display:none;"></div>
+
+  <div class="form-panel">
+    <div style="margin-bottom: 16px;"><h2>New Quotation</h2><span class="badge-gold">DRAFT</span></div>
+    <div class="meta-grid">
+      <div class="field-group"><label>Client Name</label><input type="text" id="clientName" placeholder="e.g. Alhaji Musa Ibrahim"></div>
+      <div class="field-group"><label>Installer / Company</label><input type="text" id="installerName" placeholder="Your name or company"></div>
+      <div class="field-group"><label>Quote Date</label><input type="date" id="quoteDate"></div>
+      <div class="field-group"><label>Currency</label><select id="currency"><option value="₦">₦ — Naira</option><option value="$">$ — Dollar</option><option value="€">€ — Euro</option></select></div>
+      <div class="field-group">
+        <label>Logo Option</label>
+        <div class="logo-control"><input type="checkbox" id="enableLogoCheckbox"> <label>Include business logo on PDF</label></div>
+        <div id="logoUploadArea" style="display: none;" class="logo-upload-area">
+          <img id="logoPreview" class="logo-preview"><input type="file" id="logoUpload" accept="image/*" style="display:none">
+          <button class="btn-small" onclick="document.getElementById('logoUpload').click()">Upload Logo</button>
+          <button class="btn-small" id="removeLogoBtn">Remove Logo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="material-row">
+    <div class="search-box"><input type="text" id="materialSearch" placeholder="🔍 Search materials..."></div>
+    <select id="materialSelect" multiple size="10"></select>
+    <button class="btn btn-ghost" id="addMaterialBtn">➕ Add selected materials</button>
+  </div>
+  <div class="material-note">ℹ️ These are not real prices, input real price and unit</div>
+
+  <div class="table-wrap">
+    <table id="itemsTable">
+      <thead><tr><th style="width:36px">#</th><th>Component / Part</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th><th></th> </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="table-bottom-actions">
+    <button class="btn btn-ghost" id="addCoreBtn">+ Add custom item to CORE</button>
+    <button class="btn btn-ghost" id="addMaterialBtnCustom">+ Add custom item to MATERIALS</button>
+    <button class="btn btn-ghost" id="resetDefaultBtn">⟳ Reset to default parts</button>
+  </div>
+
+  <div class="contact-section">
+    <h4>📞 Contact Us (Optional – appears on PDF)</h4>
+    <div class="contact-grid">
+      <div class="field-group"><label>Email</label><input type="email" id="contactEmail" placeholder="your@email.com"></div>
+      <div class="field-group"><label>Phone</label><input type="text" id="contactPhone" placeholder="+234 123 456 7890"></div>
+      <div class="field-group"><label>Website</label><input type="text" id="contactWebsite" placeholder="www.yourcompany.com"></div>
+    </div>
+  </div>
+
+  <div class="totals-bar">
+    <div class="grand-total">
+      <div class="chip-label">GRAND TOTAL</div>
+      <div class="chip-val"><span class="currency-badge" id="grandCurrency">₦</span><span id="grandTotalVal">0</span></div>
+    </div>
+  </div>
+
+  <div class="bottom-actions">
+    <button class="btn btn-gold" id="saveQuoteBtn">💾 Save Quote</button>
+    <button class="btn btn-teal" onclick="window.print()">🖨️ Print / PDF</button>
+  </div>
+
+  <div id="printContactBottom" class="print-contact-bottom"></div>
+  <div class="app-footer">
+    Powered by <strong>Lamisaid Services</strong> | SolarQuote Pro<br>
+    Nigeria number one energy solution
+    <br>
+    <button id="installAppBtn" class="install-btn" style="display: none;">📲 Install App</button>
+  </div>
+</div>
+
+<div id="historyView" class="view">
+  <div class="history-header"><h2>Saved Quotes</h2><div class="filter-bar"><input type="date" id="filterDate"><button class="btn btn-ghost btn-sm" id="applyFilter">Filter</button><button class="btn btn-ghost btn-sm" id="viewAllBtn">View All</button></div></div>
+  <div id="quoteListContainer" class="quote-cards"><div class="empty-state">No saved quotes yet.</div></div>
+  <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;"><button class="btn btn-ghost btn-sm" id="exportQuotesBtn">📥 Export all quotes (JSON)</button><button class="btn btn-ghost btn-sm" id="importQuotesBtn">📤 Import quotes (JSON)</button><input type="file" id="importFileInput" accept="application/json" style="display:none"></div>
+</div>
+
+<!-- Help Modal -->
+<div id="helpModal" class="modal-overlay">
+  <div class="confirm-modal" style="max-width: 400px;">
+    <div class="help-content">
+      <h3>📘 How to use SolarQuote Pro</h3>
+      <ul><li>🔍 Search materials – select multiple, click "Add selected"</li><li>➕ Add custom items to CORE or MATERIALS section</li><li>✏️ Edit rows – totals update automatically</li><li>💾 Save quotes – stored in browser</li><li>📁 History – filter by date, load, delete</li><li>🖨️ Print / PDF – includes logo and contact info</li></ul>
+      <p style="margin-top:12px;font-size:12px;color:#b57c00;">📧 lamisaid97@gmail.com</p>
+    </div>
+    <div class="modal-buttons"><button class="btn-no" id="closeHelpBtn">Close</button></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal-overlay">
+  <div class="confirm-modal" style="max-width: 400px;">
+    <div class="settings-content">
+      <h3>⚙️ App Settings</h3>
+      <div class="theme-toggle"><span>🌓 Theme:</span><button id="lightModeBtn" class="active">Light</button><button id="darkModeBtn">Dark</button></div>
+      <hr style="margin:16px 0;border-color:#ddd">
+      <p><strong>💾 Data Management</strong></p>
+      <button id="clearAllQuotesBtn" class="btn" style="background:#c62828; color:white; margin-top:8px; padding:8px 16px; border-radius:40px;">🗑 Clear all saved quotes</button>
+      <hr style="margin:16px 0;border-color:#ddd">
+      <p><strong>📱 App Info</strong></p>
+      <p>Version: 2.1.0<br>Developer: Lamisaid Services<br>PWA ready</p>
+    </div>
+    <div class="modal-buttons"><button class="btn-no" id="closeSettingsBtn">Close</button></div>
+  </div>
+</div>
+
+<!-- Custom Material Target Modal -->
+<div id="materialTargetModal" class="modal-overlay">
+  <div class="confirm-modal" style="max-width: 340px;">
+    <p style="margin-bottom: 20px;">📍 Where do you want to add the selected materials?</p>
+    <div class="modal-buttons">
+      <button id="targetCoreBtn" class="btn-yes" style="background: #1b5e3f;">📦 Add to Core</button>
+      <button id="targetMaterialsBtn" class="btn-yes" style="background: #2e7d64;">🔧 Add to Materials</button>
+    </div>
+    <div class="modal-buttons" style="margin-top: 12px;">
+      <button id="cancelTargetBtn" class="btn-no">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset & Delete Confirmation Modal -->
+<div id="confirmModal" class="modal-overlay">
+  <div class="confirm-modal"><p id="modalMessage">❓ Are you sure?</p><div class="modal-buttons"><button id="modalYesBtn" class="btn-yes">Yes</button><button id="modalNoBtn" class="btn-no">Cancel</button></div></div>
+</div>
+
+<!-- Exit Confirmation Modal -->
+<div id="exitConfirmModal" class="modal-overlay">
+  <div class="confirm-modal"><p>❓ Exit app?</p><div class="modal-buttons"><button id="exitYesBtn" class="btn-yes">Yes, Exit</button><button id="exitNoBtn" class="btn-no">Cancel</button></div></div>
+</div>
+<div id="toast"></div>
+
+<script>
+  // ---------- Your complete JavaScript (unchanged) ----------
+  // Items structure
+  let currentItems = [
+    { type: 'core', part: "Solar Panel (450W) Panel", qty: 4, price: 85000 },
+    { type: 'core', part: "Inverter (5kW) Inverter", qty: 1, price: 350000 },
+    { type: 'core', part: "Battery (12V/200Ah) Battery", qty: 2, price: 180000 },
+    { type: 'core', part: "Charge Controller (60A) Controller", qty: 1, price: 75000 },
+    { type: 'materials', part: "Mounting Structure Structure", qty: 1, price: 50000 },
+    { type: 'materials', part: "Cables & Accessories Kit", qty: 1, price: 25000 }
+  ];
+
+  // Material groups (same)
+  const materialGroups = [
+    { label: "🔋 Batteries", options: [{ name: "60kWh Hybrid Lithium Battery", price: 15450 }, { name: "Lithium‑ion 5kWh (wall‑mount) Battery", price: 850000 }, { name: "Lithium‑ion 10.24kWh Battery", price: 1650000 }, { name: "LiFePO4 200Ah 12V Battery", price: 350000 }, { name: "Lead‑acid Gel 200Ah Battery", price: 180000 }] },
+    { label: "☀️ Solar Panels", options: [{ name: "60W Solar Panel", price: 155 }, { name: "Monocrystalline 450W Panel", price: 85000 }, { name: "Monocrystalline 550W Panel", price: 105000 }, { name: "Polycrystalline 330W Panel", price: 65000 }, { name: "Bifacial 600W Panel", price: 125000 }] },
+    { label: "🔄 Inverters", options: [{ name: "Sohu 50kWh Hybrid Inverter", price: 3800 }, { name: "Hybrid Inverter 3kW Inverter", price: 280000 }, { name: "Hybrid Inverter 5kW Inverter", price: 380000 }, { name: "Hybrid Inverter 8kW Inverter", price: 550000 }, { name: "Off‑grid Inverter 1.5kW Inverter", price: 120000 }] },
+    { label: "🔌 Cables & Wiring", options: [{ name: "6mm Solar Cable", price: 2300 }, { name: "4mm² Solar Cable (red) per meter Cable", price: 350 }, { name: "6mm² Solar Cable (black) per meter Cable", price: 500 }, { name: "10mm² Battery Cable per meter Cable", price: 800 }, { name: "25mm Wire Cable", price: 350 }, { name: "35mm Flexible Wire Cable", price: 850 }, { name: "MC4 Connectors (pair) Cable", price: 1500 }] },
+    { label: "🛡️ Protection Devices", options: [{ name: "DC Surge Arrestor Protector", price: 20 }, { name: "DC Breaker Protector", price: 20 }, { name: "250A AC Breaker Protector", price: 55 }, { name: "DC MCB 2P 63A Protector", price: 4500 }, { name: "AC MCB 1P 32A Protector", price: 1200 }, { name: "AC RCD 30mA 2P Protector", price: 8500 }] },
+    { label: "🔧 Mounting & Structures", options: [{ name: "Aluminum Profile Structure", price: 11000 }, { name: "Aluminum Rail (per meter) Structure", price: 2500 }, { name: "Mid Clamp (set of 4) Structure", price: 2000 }, { name: "End Clamp (set of 4) Structure", price: 2000 }, { name: "Roof Hook (each) Structure", price: 1200 }] },
+    { label: "🧰 Accessories & Others", options: [{ name: "Capri Screw Accessory", price: 12 }, { name: "Bolt and Nut Accessory", price: 50 }, { name: "Flexible Pipe Accessory", price: 20 }, { name: "AC Panel Board (1500A) Accessory", price: 1500 }, { name: "AC Panel Board (1600A) Accessory", price: 1600 }, { name: "MC4 Accessory", price: 50 }, { name: "Change Over Accessory", price: 450 }, { name: "Cable Belt Accessory", price: 500 }, { name: "Cable Lock Accessory", price: 1500 }, { name: "Cable Tie (heavy) pack 100 Accessory", price: 1500 }, { name: "Conduit PVC 25mm (per meter) Accessory", price: 400 }, { name: "Distribution Box 8‑way Accessory", price: 8500 }, { name: "Changeover Switch 63A Accessory", price: 12500 }] }
+  ];
+
+  // Helper functions
+  function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+
+  // Update core subtotal, materials subtotal, and grand total without rebuilding table
+  function updateTotalsOnly() {
+    let coreTotal = 0, materialTotal = 0;
+    for (const item of currentItems) {
+      const total = (item.qty || 0) * (item.price || 0);
+      if (item.type === 'core') coreTotal += total;
+      else materialTotal += total;
+    }
+    const currency = document.getElementById('currency').value;
+    document.getElementById('grandTotalVal').innerText = (coreTotal + materialTotal).toLocaleString();
+    document.getElementById('grandCurrency').innerText = currency;
+    const tbody = document.getElementById('tableBody');
+    const rows = tbody.querySelectorAll('.subtotal-row');
+    if (rows.length >= 2) {
+      rows[0].innerHTML = `<td colspan="3" style="text-align:right; font-weight:bold;">Subtotal (Core Components):</td><td colspan="2" style="text-align:right; font-weight:bold; color:#2e7d64;">${currency}${coreTotal.toLocaleString()}</td><td></td>`;
+      rows[1].innerHTML = `<td colspan="3" style="text-align:right; font-weight:bold;">Subtotal (Installation Materials):</td><td colspan="2" style="text-align:right; font-weight:bold; color:#2e7d64;">${currency}${materialTotal.toLocaleString()}</td><td></td>`;
+    }
+  }
+
+  function createRow(item, idx, counter) {
+    const tr = document.createElement('tr');
+    tr.classList.add('item-row');
+    tr.setAttribute('data-idx', idx);
+    tr.innerHTML = `
+      <td>${counter}</td>
+      <td class="part-name"><input type="text" class="part-input" value="${escapeHtml(item.part)}"></td>
+      <td style="text-align:right"><input type="number" class="qty-input" value="${item.qty}" step="any" min="0" style="width:80px;text-align:right"></td>
+      <td style="text-align:right"><input type="number" class="price-input" value="${item.price}" step="any" min="0" style="width:110px;text-align:right"></td>
+      <td class="total-cell" style="text-align:right">${(item.qty*item.price).toLocaleString()}</td>
+      <td class="delete-cell"><button class="del-btn">✖</button></td>
+    `;
+    const qtyInp = tr.querySelector('.qty-input');
+    const priceInp = tr.querySelector('.price-input');
+    const partInp = tr.querySelector('.part-input');
+    const delBtn = tr.querySelector('.del-btn');
+    const update = () => {
+      currentItems[idx].part = partInp.value;
+      currentItems[idx].qty = parseFloat(qtyInp.value) || 0;
+      currentItems[idx].price = parseFloat(priceInp.value) || 0;
+      const totalCell = tr.querySelector('.total-cell');
+      const total = currentItems[idx].qty * currentItems[idx].price;
+      totalCell.textContent = total.toLocaleString();
+      updateTotalsOnly();
+    };
+    qtyInp.addEventListener('input', update);
+    priceInp.addEventListener('input', update);
+    partInp.addEventListener('input', update);
+    delBtn.addEventListener('click', () => {
+      currentItems.splice(idx, 1);
+      renderTable();
+    });
+    return tr;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    let coreItems = currentItems.filter(i => i.type === 'core');
+    let materialItems = currentItems.filter(i => i.type === 'materials');
+    const coreHeader = document.createElement('tr');
+    coreHeader.className = 'section-header';
+    coreHeader.innerHTML = `<td colspan="6" style="background:#eef5ee; font-weight:bold;">📦 CORE INSTALLATION COMPONENTS</td>`;
+    tbody.appendChild(coreHeader);
+    let coreCounter = 1;
+    coreItems.forEach((item, i) => {
+      const originalIndex = currentItems.findIndex(x => x === item);
+      tbody.appendChild(createRow(item, originalIndex, coreCounter++));
+    });
+    const coreTotal = coreItems.reduce((s,i) => s + (i.qty*i.price), 0);
+    const coreSubRow = document.createElement('tr');
+    coreSubRow.className = 'subtotal-row';
+    coreSubRow.innerHTML = `<td colspan="3" style="text-align:right; font-weight:bold;">Subtotal (Core Components):</td><td colspan="2" style="text-align:right; font-weight:bold; color:#2e7d64;">${document.getElementById('currency').value}${coreTotal.toLocaleString()}</td><td></td>`;
+    tbody.appendChild(coreSubRow);
+
+    const matHeader = document.createElement('tr');
+    matHeader.className = 'section-header';
+    matHeader.innerHTML = `<td colspan="6" style="background:#eef5ee; font-weight:bold;">🔧 INSTALLATION MATERIALS</td>`;
+    tbody.appendChild(matHeader);
+    let matCounter = 1;
+    materialItems.forEach((item, i) => {
+      const originalIndex = currentItems.findIndex(x => x === item);
+      tbody.appendChild(createRow(item, originalIndex, matCounter++));
+    });
+    const matTotal = materialItems.reduce((s,i) => s + (i.qty*i.price), 0);
+    const matSubRow = document.createElement('tr');
+    matSubRow.className = 'subtotal-row';
+    matSubRow.innerHTML = `<td colspan="3" style="text-align:right; font-weight:bold;">Subtotal (Installation Materials):</td><td colspan="2" style="text-align:right; font-weight:bold; color:#2e7d64;">${document.getElementById('currency').value}${matTotal.toLocaleString()}</td><td></td>`;
+    tbody.appendChild(matSubRow);
+    updateTotalsOnly();
+  }
+
+  function addItemToType(type, part, qty, price) {
+    currentItems.push({ type, part, qty, price });
+    renderTable();
+  }
+
+  function resetToDefault() {
+    currentItems = [
+      { type: 'core', part: "Solar Panel (450W) Panel", qty: 4, price: 85000 },
+      { type: 'core', part: "Inverter (5kW) Inverter", qty: 1, price: 350000 },
+      { type: 'core', part: "Battery (12V/200Ah) Battery", qty: 2, price: 180000 },
+      { type: 'core', part: "Charge Controller (60A) Controller", qty: 1, price: 75000 },
+      { type: 'materials', part: "Mounting Structure Structure", qty: 1, price: 50000 },
+      { type: 'materials', part: "Cables & Accessories Kit", qty: 1, price: 25000 }
+    ];
+    renderTable();
+    showToast('Reset to default parts', true);
+  }
+
+  function buildOriginalSelect() {
+    let html = "";
+    for (const g of materialGroups) {
+      html += `<optgroup label="${g.label}">`;
+      for (const opt of g.options) html += `<option value='{"name":"${escapeHtml(opt.name)}","price":${opt.price}}'>${escapeHtml(opt.name)} – ₦${opt.price.toLocaleString()}</option>`;
+      html += `</optgroup>`;
+    }
+    return html;
+  }
+  function setupMaterialSearch() {
+    const search = document.getElementById('materialSearch'), select = document.getElementById('materialSelect');
+    const original = buildOriginalSelect();
+    select.innerHTML = original;
+    search.addEventListener('input', () => {
+      const term = search.value.trim().toLowerCase();
+      if (!term) { select.innerHTML = original; return; }
+      const matches = [];
+      for (const g of materialGroups) for (const opt of g.options) if (opt.name.toLowerCase().includes(term)) matches.push(opt);
+      if (!matches.length) { select.innerHTML = `<option disabled>No matches</option>`; return; }
+      let flat = "";
+      for (const opt of matches) flat += `<option value='{"name":"${escapeHtml(opt.name)}","price":${opt.price}}'>${escapeHtml(opt.name)} – ₦${opt.price.toLocaleString()}</option>`;
+      select.innerHTML = flat;
+    });
+  }
+
+  const materialTargetModal = document.getElementById('materialTargetModal');
+  const targetCoreBtn = document.getElementById('targetCoreBtn');
+  const targetMaterialsBtn = document.getElementById('targetMaterialsBtn');
+  const cancelTargetBtn = document.getElementById('cancelTargetBtn');
+  let pendingSelectedMaterials = null;
+  function showMaterialTargetModal(selected) { pendingSelectedMaterials = selected; materialTargetModal.classList.add('active'); }
+  function hideMaterialTargetModal() { materialTargetModal.classList.remove('active'); pendingSelectedMaterials = null; }
+  targetCoreBtn.addEventListener('click', () => {
+    if (pendingSelectedMaterials) {
+      for (const opt of pendingSelectedMaterials) {
+        try { const data = JSON.parse(opt.value); currentItems.push({ type: 'core', part: data.name, qty: 1, price: data.price }); } catch(e) {}
+      }
+      renderTable();
+      showToast(`Added ${pendingSelectedMaterials.length} material(s) to Core`, true);
+      document.getElementById('materialSelect').selectedIndex = -1;
+      hideMaterialTargetModal();
+    }
+  });
+  targetMaterialsBtn.addEventListener('click', () => {
+    if (pendingSelectedMaterials) {
+      for (const opt of pendingSelectedMaterials) {
+        try { const data = JSON.parse(opt.value); currentItems.push({ type: 'materials', part: data.name, qty: 1, price: data.price }); } catch(e) {}
+      }
+      renderTable();
+      showToast(`Added ${pendingSelectedMaterials.length} material(s) to Installation Materials`, true);
+      document.getElementById('materialSelect').selectedIndex = -1;
+      hideMaterialTargetModal();
+    }
+  });
+  cancelTargetBtn.addEventListener('click', hideMaterialTargetModal);
+  materialTargetModal.addEventListener('click', (e) => { if (e.target === materialTargetModal) hideMaterialTargetModal(); });
+  function addSelectedMaterials() {
+    const select = document.getElementById('materialSelect');
+    const selected = Array.from(select.selectedOptions).filter(o => o.value);
+    if (!selected.length) { showToast('Select at least one material', false); return; }
+    showMaterialTargetModal(selected);
+  }
+
+  // Logo handling
+  const enableLogo = document.getElementById('enableLogoCheckbox');
+  const logoArea = document.getElementById('logoUploadArea');
+  const logoPreview = document.getElementById('logoPreview');
+  const removeLogo = document.getElementById('removeLogoBtn');
+  function toggleLogo() { if (enableLogo.checked) logoArea.style.display = 'flex'; else { logoArea.style.display = 'none'; logoPreview.src = ''; logoPreview.style.display = 'none'; saveBusiness(); } updatePrintHeader(); }
+  enableLogo.addEventListener('change', toggleLogo);
+  function loadBusiness() {
+    const saved = localStorage.getItem('solar_business');
+    if (saved) { const data = JSON.parse(saved); enableLogo.checked = data.logoEnabled; if (data.logoEnabled && data.logo) { logoPreview.src = data.logo; logoPreview.style.display = 'block'; logoArea.style.display = 'flex'; } else { logoPreview.style.display = 'none'; if (data.logoEnabled) logoArea.style.display = 'flex'; else logoArea.style.display = 'none'; } }
+    else { enableLogo.checked = false; logoArea.style.display = 'none'; }
+    updatePrintHeader();
+  }
+  function saveBusiness() { const logo = (logoPreview.src && logoPreview.style.display !== 'none') ? logoPreview.src : ''; localStorage.setItem('solar_business', JSON.stringify({ logo, logoEnabled: enableLogo.checked })); updatePrintHeader(); }
+  document.getElementById('logoUpload').addEventListener('change', e => { if (e.target.files[0]) { const reader = new FileReader(); reader.onload = ev => { logoPreview.src = ev.target.result; logoPreview.style.display = 'block'; saveBusiness(); }; reader.readAsDataURL(e.target.files[0]); } });
+  removeLogo.addEventListener('click', () => { logoPreview.src = ''; logoPreview.style.display = 'none'; saveBusiness(); });
+  function updatePrintHeader() {
+    document.getElementById('printCompanyName').innerText = document.getElementById('installerName').value.trim() || "SOLAR INSTALLATION QUOTATION";
+    const logoUrl = (enableLogo.checked && logoPreview.src && logoPreview.style.display !== 'none') ? logoPreview.src : '';
+    document.getElementById('printLogoWrapper').innerHTML = logoUrl ? `<img src="${logoUrl}" style="max-height:60px; max-width:150px;">` : '';
+    const clientName = document.getElementById('clientName').value.trim();
+    const clientLine = document.getElementById('printClientLine');
+    if (clientLine) { if (clientName) { clientLine.style.display = 'block'; clientLine.innerText = `Client: ${clientName} – Solar Installation Quote`; } else clientLine.style.display = 'none'; }
+    const contactEmail = document.getElementById('contactEmail').value.trim(), contactPhone = document.getElementById('contactPhone').value.trim(), contactWebsite = document.getElementById('contactWebsite').value.trim();
+    const contactDiv = document.getElementById('printContactBottom');
+    if (contactEmail || contactPhone || contactWebsite) { contactDiv.innerHTML = `<div style="text-align:center; margin-top:20px; padding-top:10px; border-top:1px solid #ccc;"><strong>Contact us:</strong><br>${contactEmail ? `📧 ${escapeHtml(contactEmail)}<br>` : ''}${contactPhone ? `📞 ${escapeHtml(contactPhone)}<br>` : ''}${contactWebsite ? `🌐 ${escapeHtml(contactWebsite)}` : ''}</div>`; contactDiv.style.display = 'block'; }
+    else contactDiv.style.display = 'none';
+  }
+
+  // localStorage for quotes
+  const STORAGE_KEY = 'solar_quotes';
+  function getQuotes() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  function saveQuotes(quotes) { localStorage.setItem(STORAGE_KEY, JSON.stringify(quotes)); updateBadge(); }
+  function saveCurrentQuote() {
+    if (currentItems.length === 0) { showToast('No items to save', false); return; }
+    const name = prompt("Enter quote name:", "Quote " + new Date().toLocaleString());
+    if (!name) return;
+    const quote = { id: Date.now(), name, date: document.getElementById('quoteDate').value || new Date().toISOString().slice(0,10), clientName: document.getElementById('clientName').value, installer: document.getElementById('installerName').value, currency: document.getElementById('currency').value, items: JSON.parse(JSON.stringify(currentItems)), contactEmail: document.getElementById('contactEmail').value, contactPhone: document.getElementById('contactPhone').value, contactWebsite: document.getElementById('contactWebsite').value, logoEnabled: enableLogo.checked, logoData: (enableLogo.checked && logoPreview.src && logoPreview.style.display !== 'none') ? logoPreview.src : '' };
+    const quotes = getQuotes(); quotes.unshift(quote); saveQuotes(quotes); showToast('Quote saved!', true); if (document.getElementById('historyView').classList.contains('active')) renderQuotes();
+  }
+  function deleteQuote(id) { let quotes = getQuotes(); quotes = quotes.filter(q => q.id !== id); saveQuotes(quotes); renderQuotes(); showToast('Quote deleted', true); }
+  function loadQuoteIntoBuilder(quote) {
+    document.getElementById('clientName').value = quote.clientName || '';
+    document.getElementById('installerName').value = quote.installer || '';
+    document.getElementById('quoteDate').value = quote.date || '';
+    document.getElementById('currency').value = quote.currency || '₦';
+    document.getElementById('contactEmail').value = quote.contactEmail || '';
+    document.getElementById('contactPhone').value = quote.contactPhone || '';
+    document.getElementById('contactWebsite').value = quote.contactWebsite || '';
+    enableLogo.checked = quote.logoEnabled === true;
+    if (quote.logoEnabled && quote.logoData) { logoPreview.src = quote.logoData; logoPreview.style.display = 'block'; logoArea.style.display = 'flex'; } else { logoPreview.src = ''; logoPreview.style.display = 'none'; if (quote.logoEnabled) logoArea.style.display = 'flex'; else logoArea.style.display = 'none'; }
+    currentItems = JSON.parse(JSON.stringify(quote.items)); renderTable(); updatePrintHeader(); switchTab('builder'); showToast('Quote loaded', true);
+  }
+
+  let currentFilter = null;
+  function renderQuotes() {
+    let quotes = getQuotes(); if (currentFilter) quotes = quotes.filter(q => q.date === currentFilter); quotes.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const container = document.getElementById('quoteListContainer');
+    if (!quotes.length) { container.innerHTML = '<div class="empty-state">No saved quotes.</div>'; return; }
+    container.innerHTML = quotes.map(q => `<div class="quote-card" data-id="${q.id}"><div class="qc-left"><div class="qc-client">${escapeHtml(q.name)}</div><div class="qc-meta"><span>📅 ${q.date}</span><span>👤 ${escapeHtml(q.clientName)}</span><span>🔧 ${escapeHtml(q.installer)}</span></div></div><div class="qc-amount">${q.currency || '₦'}${q.items.reduce((s,i)=>s+(i.qty||0)*(i.price||0),0).toLocaleString()}</div><div class="qc-actions"><button class="btn btn-ghost btn-sm load-q" data-id="${q.id}">Load</button><button class="btn btn-danger btn-sm del-q" data-id="${q.id}">Delete</button></div></div>`).join('');
+    document.querySelectorAll('.load-q').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); const id = parseInt(btn.dataset.id); loadQuoteIntoBuilder(getQuotes().find(q => q.id === id)); }));
+    document.querySelectorAll('.del-q').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); showDeleteModal(parseInt(btn.dataset.id)); }));
+    document.querySelectorAll('.quote-card').forEach(card => card.addEventListener('click', e => { if (!e.target.closest('.qc-actions')) { const id = parseInt(card.dataset.id); loadQuoteIntoBuilder(getQuotes().find(q => q.id === id)); } }));
+  }
+  function applyFilter() { currentFilter = document.getElementById('filterDate').value || null; renderQuotes(); }
+  function resetFilter() { document.getElementById('filterDate').value = ''; currentFilter = null; renderQuotes(); }
+  function updateBadge() { document.getElementById('histBadge').innerText = getQuotes().length; }
+  function exportQuotes() { const quotes = getQuotes(); const blob = new Blob([JSON.stringify(quotes, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `solar_quotes_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href); showToast('Exported', true); }
+  function importQuotes(file) { const reader = new FileReader(); reader.onload = e => { try { const imported = JSON.parse(e.target.result); if (Array.isArray(imported)) { saveQuotes(imported); renderQuotes(); showToast('Imported', true); } else throw new Error(); } catch(err) { showToast('Invalid file', false); } }; reader.readAsText(file); }
+  function switchTab(tab) { document.getElementById('builderView').classList.toggle('active', tab === 'builder'); document.getElementById('historyView').classList.toggle('active', tab === 'history'); document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById(`tab-${tab}`).classList.add('active'); if (tab === 'history') renderQuotes(); }
+  function showToast(msg, success) { const toast = document.getElementById('toast'); toast.innerText = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2500); }
+
+  // Modal handling for reset and delete
+  let pendingResetCallback = null, pendingDeleteId = null;
+  const confirmModal = document.getElementById('confirmModal');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalYes = document.getElementById('modalYesBtn');
+  const modalNo = document.getElementById('modalNoBtn');
+  function showConfirmModal(msg, callback) { pendingResetCallback = callback; pendingDeleteId = null; modalMessage.innerText = msg; confirmModal.classList.add('active'); }
+  function showDeleteModal(id) { pendingDeleteId = id; pendingResetCallback = null; modalMessage.innerText = "❓ Delete this quote?"; confirmModal.classList.add('active'); }
+  function hideConfirmModal() { confirmModal.classList.remove('active'); pendingResetCallback = null; pendingDeleteId = null; }
+  modalYes.onclick = () => { if (pendingDeleteId) deleteQuote(pendingDeleteId); else if (pendingResetCallback) pendingResetCallback(); hideConfirmModal(); };
+  modalNo.onclick = hideConfirmModal;
+  confirmModal.onclick = e => { if (e.target === confirmModal) hideConfirmModal(); };
+
+  // Dark/light mode
+  function setTheme(theme) { if (theme === 'dark') document.body.classList.add('dark'); else document.body.classList.remove('dark'); localStorage.setItem('theme', theme); document.getElementById('lightModeBtn').classList.toggle('active', theme === 'light'); document.getElementById('darkModeBtn').classList.toggle('active', theme === 'dark'); }
+  function loadTheme() { const saved = localStorage.getItem('theme'); if (saved === 'dark') setTheme('dark'); else setTheme('light'); }
+
+  // Menu and other modals
+  const menuBtn = document.getElementById('menuToggleBtn'), sideNav = document.getElementById('sideNav'), menuOverlay = document.getElementById('menuOverlay'), closeNav = document.getElementById('closeNavBtn');
+  function openMenu() { sideNav.classList.add('open'); menuOverlay.classList.add('active'); }
+  function closeMenu() { sideNav.classList.remove('open'); menuOverlay.classList.remove('active'); }
+  menuBtn.addEventListener('click', openMenu); menuOverlay.addEventListener('click', closeMenu); closeNav.addEventListener('click', closeMenu);
+  document.getElementById('navHome').addEventListener('click', () => { window.scrollTo({top:0}); closeMenu(); });
+  document.getElementById('navExport').addEventListener('click', () => { exportQuotes(); closeMenu(); });
+  document.getElementById('navImport').addEventListener('click', () => { document.getElementById('importFileInput').click(); closeMenu(); });
+  const helpModal = document.getElementById('helpModal'), settingsModal = document.getElementById('settingsModal');
+  document.getElementById('navHelp').addEventListener('click', () => { helpModal.classList.add('active'); closeMenu(); });
+  document.getElementById('navSettings').addEventListener('click', () => { settingsModal.classList.add('active'); closeMenu(); });
+  document.getElementById('closeHelpBtn').addEventListener('click', () => helpModal.classList.remove('active'));
+  document.getElementById('closeSettingsBtn').addEventListener('click', () => settingsModal.classList.remove('active'));
+  document.getElementById('lightModeBtn').addEventListener('click', () => setTheme('light'));
+  document.getElementById('darkModeBtn').addEventListener('click', () => setTheme('dark'));
+  document.getElementById('clearAllQuotesBtn').addEventListener('click', () => { if (confirm('Delete ALL saved quotes?')) { localStorage.removeItem(STORAGE_KEY); updateBadge(); renderQuotes(); showToast('All quotes cleared', true); } });
+  const exitModal = document.getElementById('exitConfirmModal'), exitYes = document.getElementById('exitYesBtn'), exitNo = document.getElementById('exitNoBtn');
+  document.getElementById('navExit').addEventListener('click', () => { exitModal.classList.add('active'); closeMenu(); });
+  exitYes.addEventListener('click', () => { exitModal.classList.remove('active'); if (window.matchMedia('(display-mode: standalone)').matches) window.close(); else alert('Close tab to exit.'); });
+  exitNo.addEventListener('click', () => exitModal.classList.remove('active'));
+  exitModal.addEventListener('click', e => { if (e.target === exitModal) exitModal.classList.remove('active'); });
+  document.getElementById('importFileInput').addEventListener('change', e => { if (e.target.files.length) importQuotes(e.target.files[0]); e.target.value = ''; });
+
+  // Event bindings
+  document.getElementById('addCoreBtn').addEventListener('click', () => addItemToType('core', "New Core Item", 0, 0));
+  document.getElementById('addMaterialBtnCustom').addEventListener('click', () => addItemToType('materials', "New Material Item", 0, 0));
+  document.getElementById('resetDefaultBtn').addEventListener('click', () => showConfirmModal("⚠️ Reset all values? This will erase current quote.", resetToDefault));
+  document.getElementById('addMaterialBtn').addEventListener('click', addSelectedMaterials);
+  document.getElementById('saveQuoteBtn').addEventListener('click', saveCurrentQuote);
+  document.getElementById('applyFilter').addEventListener('click', applyFilter);
+  document.getElementById('viewAllBtn').addEventListener('click', resetFilter);
+  document.getElementById('exportQuotesBtn').addEventListener('click', exportQuotes);
+  document.getElementById('importQuotesBtn').addEventListener('click', () => document.getElementById('importFileInput').click());
+  document.getElementById('installerName').addEventListener('input', updatePrintHeader);
+  document.getElementById('clientName').addEventListener('input', updatePrintHeader);
+  document.getElementById('contactEmail').addEventListener('input', updatePrintHeader);
+  document.getElementById('contactPhone').addEventListener('input', updatePrintHeader);
+  document.getElementById('contactWebsite').addEventListener('input', updatePrintHeader);
+  document.getElementById('currency').addEventListener('change', () => renderTable());
+
+  // ---------- PWA: install button logic ----------
+  let deferredPrompt;
+  const installAppBtn = document.getElementById('installAppBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installAppBtn.style.display = 'inline-block';
+  });
+  installAppBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') console.log('PWA installed');
+      deferredPrompt = null;
+      installAppBtn.style.display = 'none';
+    }
+  });
+  window.addEventListener('appinstalled', () => {
+    installAppBtn.style.display = 'none';
+    console.log('App installed');
+  });
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then(reg => console.log('SW registered:', reg))
+      .catch(err => console.log('SW failed:', err));
+  }
+
+  // Initialisation
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('quoteDate').value = new Date().toISOString().slice(0,10);
+    renderTable(); loadBusiness(); setupMaterialSearch(); loadTheme(); updateBadge(); updatePrintHeader();
+  });
+</script>
+</body>
+</html>
