@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>SolarQuote Pro app</title>
+  <title>SolarQuote Pro – App</title>
   <meta name="theme-color" content="#1b5e3f">
   <meta name="description" content="Professional solar quote builder – install as app, work offline">
   <link rel="manifest" href="manifest.json">
@@ -516,6 +516,33 @@
       .part-name input, .qty-input, .price-input { background: transparent; border: none; color: black; }
       .total-cell { color: #116644; }
       .grand-total { background: #f9f9f9; border: 1px solid #aaa; }
+      
+     
+  /* Set page orientation to landscape */
+  @page {
+    size: landscape;
+    margin: 1cm;
+  }
+
+  /* Make all text bolder in the printed quote */
+  body, .view, .table-wrap, table, td, th, .part-name input, .qty-input, .price-input, .total-cell, .grand-total .chip-val {
+    font-weight: 600 !important;
+    color: #000 !important;
+  }
+
+  /* Ensure table headers are bold */
+  thead th {
+    font-weight: 800 !important;
+  }
+
+  /* Keep grand total extra bold */
+  .grand-total .chip-val {
+    font-weight: 700 !important;
+  }
+
+     
+     
+      
     }
     .print-header { display: none; }
     .print-contact-bottom { display: none; }
@@ -553,10 +580,10 @@
   <button id="navSettings">⚙️ Settings</button>
   <hr>
   <div style="padding: 0 1.5rem; color: rgba(255,255,255,0.8); font-size: 0.8rem;">Contact us:</div>
-  <a href="mailto:lamisaid97@gmail.com" id="navEmail">✉️ Email: lamisaid97@gmail.com</a>
-  <a href="https://wa.me/2347067820673" target="_blank" id="navWhatsapp">💬 WhatsApp: 0706 782 0673</a>
+  <a href="mailto:lamisaid97@gmail.com" id="navEmail">✉️ Email</a>
+  <a href="https://wa.me/2347067820673" target="_blank" id="navWhatsapp">💬 WhatsApp</a>
   <hr>
-  <button id="navExit">🚪 Exit</button>
+  <button id="navExit" style="font-weight:900;"> Exit</button>
   <div class="nav-footer">SolarQuote Pro v2.1</div>
 </div>
 
@@ -644,7 +671,7 @@
 <div id="historyView" class="view">
   <div class="history-header"><h2>Saved Quotes</h2><div class="filter-bar"><input type="date" id="filterDate"><button class="btn btn-ghost btn-sm" id="applyFilter">Filter</button><button class="btn btn-ghost btn-sm" id="viewAllBtn">View All</button></div></div>
   <div id="quoteListContainer" class="quote-cards"><div class="empty-state">No saved quotes yet.</div></div>
-  <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;"><button class="btn btn-ghost btn-sm" id="exportQuotesBtn">📥 Export all quotes (JSON)</button><button class="btn btn-ghost btn-sm" id="importQuotesBtn">📤 Import quotes (JSON)</button><input type="file" id="importFileInput" accept="application/json" style="display:none"></div>
+  <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;"><button class="btn btn-ghost btn-sm" id="exportQuotesBtn">📥 Export all quotes</button><button class="btn btn-ghost btn-sm" id="importQuotesBtn">📤 Import quotes</button><input type="file" id="importFileInput" accept="application/json" style="display:none"></div>
 </div>
 
 <!-- Help Modal -->
@@ -652,7 +679,13 @@
   <div class="confirm-modal" style="max-width: 400px;">
     <div class="help-content">
       <h3>📘 How to use SolarQuote Pro</h3>
-      <ul><li>🔍 Search materials – select multiple, click "Add selected"</li><li>➕ Add custom items to CORE or MATERIALS section</li><li>✏️ Edit rows – totals update automatically</li><li>💾 Save quotes – stored in browser</li><li>📁 History – filter by date, load, delete</li><li>🖨️ Print / PDF – includes logo and contact info</li></ul>
+      <ol><li>🔍 Search materials, can select multiple materials, click "Add selected material and add it to either core material or installation materials"</li>
+      <br>
+      <li>can add custom items to CORE or MATERIALS section</li><li>✏️ can Edit rows in the table, totals update automatically</li>
+      <br>
+      <li> Save quotes are stored under</li><li>📁 History which can be filtered by date and can also be load and deleted</li>
+      <br>
+      <li>🖨️ Print to PDF – includes logo and contact info</li></ol>
       <p style="margin-top:12px;font-size:12px;color:#b57c00;">📧 lamisaid97@gmail.com</p>
     </div>
     <div class="modal-buttons"><button class="btn-no" id="closeHelpBtn">Close</button></div>
@@ -679,10 +712,10 @@
 <!-- Custom Material Target Modal -->
 <div id="materialTargetModal" class="modal-overlay">
   <div class="confirm-modal" style="max-width: 340px;">
-    <p style="margin-bottom: 20px;">📍 Where do you want to add the selected materials?</p>
+    <p style="margin-bottom: 20px;"> Where do you want to add the selected materials?</p>
     <div class="modal-buttons">
-      <button id="targetCoreBtn" class="btn-yes" style="background: #1b5e3f;">📦 Add to Core</button>
-      <button id="targetMaterialsBtn" class="btn-yes" style="background: #2e7d64;">🔧 Add to Materials</button>
+      <button id="targetCoreBtn" class="btn-yes" style="background: #1b5e3f;">📦 Add to Core Materials</button>
+      <button id="targetMaterialsBtn" class="btn-yes" style="background: #2e7d64;">🔧 Add to Installation Materials</button>
     </div>
     <div class="modal-buttons" style="margin-top: 12px;">
       <button id="cancelTargetBtn" class="btn-no">Cancel</button>
